@@ -5,10 +5,14 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import scipy
+import sys
 import numpy as np
 from glob import glob
 
+if sys.version_info < (3, 0):
+    from scipy import misc
+else:
+    import scipy.misc as misc
 
 if __name__ == '__main__':
     hr_path = '../datasets/image_544x544/'
@@ -16,8 +20,8 @@ if __name__ == '__main__':
     f_list = glob(os.path.join(hr_path, '*.jpg')) + glob(os.path.join(hr_path, '*.png'))
 
     for f in f_list:
-        im = scipy.misc.imread(f, mode='RGB')
+        im = misc.imread(f, mode='RGB')
         w, h, _ = im.shape
-        im = scipy.misc.imresize(im, (w//4, h//4))
-        save_path = os.path.join(lr_path, os.path.basename(f))
-        scipy.misc.imsave(save_path, im)
+        im = misc.imresize(im, (w//4, h//4))
+        save_path = os.path.join(lr_path, os.path.basename(f).split('.')[0]+'.tif')
+        misc.imsave(save_path, im)

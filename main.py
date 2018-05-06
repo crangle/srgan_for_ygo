@@ -18,6 +18,7 @@ from time import localtime, strftime
 import logging, scipy
 
 ###====================== HYPER-PARAMETERS ===========================###
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
 ## Adam
 batch_size = config.TRAIN.batch_size
 lr_init = config.TRAIN.lr_init
@@ -95,7 +96,7 @@ def train():
     mse_loss = tl.cost.mean_squared_error(net_g.outputs, t_target_image, is_mean=True)
     vgg_loss = 2e-6 * tl.cost.mean_squared_error(vgg_predict_emb.outputs, vgg_target_emb.outputs, is_mean=True)
 
-    g_loss = mse_loss + vgg_loss + g_gan_loss
+    g_loss = mse_loss + g_gan_loss + vgg_loss
 
     g_vars = tl.layers.get_variables_with_name('SRGAN_g', True, True)
     d_vars = tl.layers.get_variables_with_name('SRGAN_d', True, True)
@@ -106,7 +107,7 @@ def train():
     g_optim_init = tf.train.AdamOptimizer(lr_v, beta1=beta1).minimize(mse_loss, var_list=g_vars)
     ## SRGAN
     g_optim = tf.train.AdamOptimizer(lr_v, beta1=beta1).minimize(g_loss, var_list=g_vars)
-    d_optim = tf.train.AdamOptimizer(lr_v, beta1=beta1).minimize(d_loss, var_list=d_vars)
+    d_optim = tf.train.GradientDescentOptimizer(lr_v*0.1).minimize(d_loss, var_list=d_vars)
 
     ###========================== RESTORE MODEL =============================###
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)) as sess:
@@ -149,7 +150,7 @@ def train():
         ## fixed learning rate
         sess.run(tf.assign(lr_v, lr_init))
         print(" ** fixed learning rate: %f (for init G)" % lr_init)
-        for epoch in range(0, n_epoch_init + 1):
+        for epoch in range(n_epoch_init, n_epoch_init + 1):
             epoch_time = time.time()
             total_mse_loss, n_iter = 0, 0
 
@@ -257,7 +258,7 @@ def evaluate():
     # train_hr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.hr_img_path, regx='.*.png', printable=False))
     # train_lr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.lr_img_path, regx='.*.png', printable=False))
     valid_hr_img_list = load_csv_list(path=config.VALID.img_list_path)
-    valid_lr_img_list = [os.path.join(config.VALID.img_list_path, os.path.basename(f)) for f in valid_hr_img_list]
+    valid_lr_img_list = [os.path.join(config.VALID.lr_img_path, os.path.basename(f).split('.')[0]+'.tif') for f in valid_hr_img_list]
     #valid_hr_img_list = sorted(tl.files.load_file_list(path=config.VALID.hr_img_path, regx='.*.png', printable=False))
     #valid_lr_img_list = sorted(tl.files.load_file_list(path=config.VALID.lr_img_path, regx='.*.png', printable=False))
 
@@ -274,7 +275,7 @@ def evaluate():
     # exit()
 
     ###========================== DEFINE MODEL ============================###
-    imid = 120  # 91: 究极宝玉神 虹龙  120: 黑魔术师 285: 星辰神
+    imid = 181  # 80: 黑魔术的幕帘  100: 于贝尔  181: 星尘龙
     valid_lr_img = valid_lr_imgs[imid]
     valid_hr_img = valid_hr_imgs[imid]
     # valid_lr_img = get_imgs_fn('test.png', 'data2017/')  # if you want to test your own image
