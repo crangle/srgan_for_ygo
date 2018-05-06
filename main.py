@@ -18,7 +18,7 @@ from time import localtime, strftime
 import logging, scipy
 
 ###====================== HYPER-PARAMETERS ===========================###
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+# os.environ['CUDA_VISIBLE_DEVICES'] = ''
 ## Adam
 batch_size = config.TRAIN.batch_size
 lr_init = config.TRAIN.lr_init
